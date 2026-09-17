@@ -1,0 +1,54 @@
+{
+  "name": "ei-secure-browser",
+  "version": "0.1.0",
+  "description": "Ei Secure Browser \u2014 native locked-down exam browser for asset_dynamic",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "dist": "npm run build && electron-builder"
+  },
+  "author": "Educational Initiatives",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@electron/fuses": "^2.1.3",
+    "@types/node": "^22.7.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.7",
+    "typescript": "^5.6.3"
+  },
+  "build": {
+    "appId": "in.assetdynamic.securebrowser",
+    "productName": "Ei Secure Browser",
+    "files": [
+      "dist/**/*",
+      "renderer/**/*",
+      "config/**/*"
+    ],
+    "directories": {
+      "output": "out"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "signtoolOptions": {
+        "signingHashAlgorithms": [
+          "sha256"
+        ]
+      }
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.education",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": null,
+      "notarize": false
+    },
+    "asar": true,
+    "afterPack": "build/fuses.js"
+  }
+}

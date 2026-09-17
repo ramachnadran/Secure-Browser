@@ -1,0 +1,8 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+
+# Generated exam evidence — regenerated on every run.
+reports/*.txt

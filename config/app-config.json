@@ -1,0 +1,53 @@
+{
+  "appName": "Ei Secure Browser",
+  "examUrl": "https://test.assetdynamic.in/asset_dynamic/asset/testForm.php",
+  "allowedDomains": [
+    "assetdynamic.in",
+    "educationalinitiatives.com",
+    "assetonline.in",
+    "amazonaws.com"
+  ],
+  "inventory": {
+    "reportFile": "reports/system-inventory.txt",
+    "snapshotIntervalMs": 120000,
+    "blockScreenshots": true,
+    "blockExamOnFindings": false,
+    "prohibitedProcesses": [
+      "anydesk",
+      "teamviewer",
+      "rustdesk",
+      "chrome remote desktop",
+      "vnc",
+      "screensharing",
+      "logmein",
+      "splashtop",
+      "obs",
+      "loom",
+      "camtasia",
+      "screenflow",
+      "snagit",
+      "screenpal",
+      "quicktime player",
+      "zoom.us",
+      "microsoft teams",
+      "webex",
+      "google meet",
+      "slack",
+      "discord",
+      "telegram",
+      "whatsapp",
+      "signal",
+      "parallels",
+      "vmware",
+      "virtualbox",
+      "utm",
+      "chatgpt",
+      "claude",
+      "copilot",
+      "perplexity"
+    ]
+  },
+  "exit": {
+    "codeSha256": "448d0e10f2935e07da7176c2c329a5c906715a051ae6a8a3e4412690c6acecac"
+  }
+}

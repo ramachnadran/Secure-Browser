@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Hardened runtime entitlements. Every one of these WEAKENS the runtime, so
+    the list is deliberately short: only what Chromium needs to run, plus the
+    device access the proctoring phase will need.
+  -->
+
+  <!-- Chromium's JavaScript engine compiles code at runtime. Without these two
+       the renderer cannot start under a hardened runtime. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+
+  <!-- Webcam and microphone, for the identity and proctoring phase. Requesting
+       them here does not grant them; macOS still prompts the student once. -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+
+  <!--
+    Deliberately NOT requested:
+      allow-dyld-environment-variables   would let DYLD_INSERT_LIBRARIES inject
+                                         a dylib into the running exam browser
+      disable-library-validation         would let unsigned code load in-process
+      debugger                           would allow attaching to our own process
+    Each of these is a documented Electron bypass. Adding one to fix a build
+    error undoes the fuses in build/fuses.js.
+  -->
+</dict>
+</plist>

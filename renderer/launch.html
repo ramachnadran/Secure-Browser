@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ei Secure Browser</title>
+  <style>
+    :root { --primary:#1f6f6a; --ink:#16242c; --muted:#5c6f78; --line:#dde5e9; --bg:#eef2f4;
+            --warn:#b4531a; --warn-bg:#fdf3ec; --ok:#1f6f4a; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(16,36,42,.12); padding: 36px 40px;
+      width: 100%; max-width: 620px; max-height: 100%; overflow-y: auto; text-align: center;
+    }
+    .logo { width: 54px; height: 54px; border-radius: 12px; background: var(--primary); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; margin-bottom: 18px; }
+    h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: -.01em; }
+    p { color: var(--muted); margin: 0 0 22px; line-height: 1.6; font-size: 14.5px; }
+    button {
+      background: var(--primary); color: #fff; border: none; border-radius: 10px;
+      padding: 13px 26px; font-size: 15.5px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: .55; cursor: default; }
+    button.secondary { background: #fff; color: var(--primary); border: 1px solid var(--line); margin-bottom: 10px; }
+    .note { margin-top: 20px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+    .status { margin-top: 14px; font-size: 13px; color: var(--primary); min-height: 18px; }
+
+    /* Pre-flight system check */
+    .check { text-align: left; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
+    .check[hidden] { display: none; }
+    .check-head { display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; background: #f7fafb; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+    .verdict.ok { color: var(--ok); }
+    .verdict.warn { color: var(--warn); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); }
+    .stat { background: #fff; padding: 12px 10px; text-align: center; }
+    .stat b { display: block; font-size: 20px; line-height: 1.2; }
+    .stat span { font-size: 11px; color: var(--muted); }
+    .rows { padding: 4px 16px 14px; font-size: 12.5px; }
+    .rows h3 { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+      margin: 14px 0 6px; font-weight: 600; }
+    .rows li { list-style: none; padding: 4px 0; line-height: 1.5; }
+    .rows ul { margin: 0; padding: 0; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      padding: 1px 6px; border-radius: 4px; margin-right: 8px; background: #eef2f4; color: var(--muted); }
+    .tag.bad { background: var(--warn-bg); color: var(--warn); }
+    .findings { background: var(--warn-bg); border-top: 1px solid var(--line); padding: 12px 16px; }
+    .findings li { color: var(--warn); }
+    .path { font-size: 11px; color: var(--muted); word-break: break-all; padding: 10px 16px;
+      border-top: 1px solid var(--line); background: #f7fafb; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Ei</div>
+    <h1 id="appName">Ei Secure Browser</h1>
+    <p>Your screen is locked for a proctored assessment. Close any other apps and run the system check before you begin. You will not be able to switch away once the exam starts.</p>
+
+    <section class="check" id="check" hidden>
+      <div class="check-head">
+        <span>System check</span>
+        <span class="verdict" id="verdict"></span>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="cApps">–</b><span>apps open</span></div>
+        <div class="stat"><b id="cProc">–</b><span>processes</span></div>
+        <div class="stat"><b id="cDev">–</b><span>devices</span></div>
+        <div class="stat"><b id="cFlag">–</b><span>flagged</span></div>
+      </div>
+      <div class="rows">
+        <h3>Applications with windows open</h3>
+        <ul id="appList"></ul>
+        <h3>Connected devices</h3>
+        <ul id="devList"></ul>
+        <h3>Screen capture</h3>
+        <ul id="capList"></ul>
+      </div>
+      <div class="findings" id="findingsBox" hidden>
+        <ul id="findingList"></ul>
+      </div>
+      <div class="path" id="reportPath"></div>
+    </section>
+
+    <button id="scanBtn" class="secondary">Run system check</button>
+    <button id="startBtn">Start secure exam</button>
+    <div class="status" id="status"></div>
+    <div class="note">This session is monitored. Do not disconnect additional displays or external devices during the exam.</div>
+  </div>
+
+  <script>
+    (function () {
+      var el = function (id) { return document.getElementById(id); };
+      var blockOnFindings = false;
+
+      function li(text, bad) {
+        var node = document.createElement('li');
+        var tag = document.createElement('span');
+        tag.className = 'tag' + (bad ? ' bad' : '');
+        tag.textContent = bad ? 'FLAGGED' : 'ok';
+        node.appendChild(tag);
+        node.appendChild(document.createTextNode(text));
+        return node;
+      }
+
+      function fill(list, items) {
+        list.textContent = '';
+        if (!items.length) { list.appendChild(li('none detected', false)); return; }
+        items.forEach(function (item) { list.appendChild(li(item.text, item.bad)); });
+      }
+
+      function render(summary) {
+        el('check').hidden = false;
+        el('cApps').textContent = summary.counts.foregroundApps;
+        el('cProc').textContent = summary.counts.totalProcesses;
+        el('cDev').textContent = summary.counts.externalDevices;
+        el('cFlag').textContent = summary.counts.flaggedDevices + summary.counts.prohibitedApps;
+
+        var verdict = el('verdict');
+        verdict.textContent = summary.clean
+          ? 'Clean — ready to start'
+          : summary.findings.length + ' issue(s) found';
+        verdict.className = 'verdict ' + (summary.clean ? 'ok' : 'warn');
+
+        fill(el('appList'), summary.foregroundApps.map(function (a) {
+          return { text: a.name + (a.prohibited ? ' — not allowed during the exam' : ''), bad: a.prohibited };
+        }));
+
+        fill(el('devList'), summary.devices.map(function (d) {
+          return { text: d.name + ' (' + d.category + ')' + (d.reason ? ' — ' + d.reason : ''), bad: d.flagged };
+        }));
+
+        var cap = summary.capture;
+        fill(el('capList'), [
+          { text: cap.contentProtection
+              ? 'Exam window is excluded from screenshots and recordings'
+              : 'Exam window is NOT capture-proof', bad: !cap.contentProtection },
+          { text: cap.screenshotsBlocked
+              ? 'System-wide screenshots are switched off for this exam'
+              : 'System-wide screenshots are still enabled', bad: !cap.screenshotsBlocked },
+          { text: cap.recordersRunning.length
+              ? 'Recording or remote-access apps running: ' + cap.recordersRunning.join(', ')
+              : 'No screen recorder or remote-access app running', bad: cap.recordersRunning.length > 0 }
+        ]);
+
+        var box = el('findingsBox');
+        var list = el('findingList');
+        list.textContent = '';
+        box.hidden = summary.clean;
+        summary.findings.forEach(function (f) { list.appendChild(li(f, true)); });
+
+        el('reportPath').textContent = 'Full report: ' + summary.reportPath;
+        el('startBtn').disabled = blockOnFindings && !summary.clean;
+      }
+
+      async function scan() {
+        var btn = el('scanBtn');
+        btn.disabled = true;
+        el('status').textContent = 'Checking this machine…';
+        try {
+          render(await window.secureBrowser.scanSystem());
+          el('status').textContent = '';
+        } catch (e) {
+          el('status').textContent = 'System check failed. Please contact your invigilator.';
+        }
+        btn.disabled = false;
+      }
+
+      (async function init() {
+        try {
+          var cfg = await window.secureBrowser.getConfig();
+          if (cfg && cfg.appName) { el('appName').textContent = cfg.appName; }
+          blockOnFindings = !!(cfg && cfg.blockExamOnFindings);
+        } catch (e) {}
+
+        el('scanBtn').addEventListener('click', scan);
+
+        el('startBtn').addEventListener('click', async function () {
+          var btn = el('startBtn');
+          btn.disabled = true;
+          el('status').textContent = 'Starting secure session…';
+          try {
+            var result = await window.secureBrowser.startExam();
+            if (!result.ok) {
+              el('status').textContent = result.reason === 'blocked'
+                ? 'Cannot start: ' + result.findings.length + ' issue(s) must be fixed first.'
+                : 'Could not start. Please contact your invigilator.';
+              btn.disabled = false;
+              if (result.findings) { scan(); }
+            }
+          } catch (e) {
+            el('status').textContent = 'Could not start. Please contact your invigilator.';
+            btn.disabled = false;
+          }
+        });
+
+        scan(); // the student sees the state of their machine without asking
+      })();
+    })();
+  </script>
+</body>
+</html>

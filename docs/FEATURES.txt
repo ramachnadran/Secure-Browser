@@ -1,0 +1,233 @@
+=============================================================================================================
+Ei Secure Browser  --  FEATURE LIST
+=============================================================================================================
+Version 0.1.0  |  Electron 33  |  Generated 10 Sep 2026
+
+PLATFORM KEY  --  which operating system the feature runs on
+  macOS+Win     Cross-platform Electron or Node API. Works the same on both.
+  macOS only    Guarded to macOS in code. Does nothing at all on Windows.
+  Win UNTESTED  A Windows code path is written, but no Windows build has ever
+                been produced or run. Treat Windows behaviour as unproven.
+
+STATUS KEY  --  how far along the feature is, on whichever platform it targets
+  LIVE          Running in the build and verified on macOS.
+  PARTIAL       Works, but with a stated limitation. Applies on every platform
+                the feature runs on, not just one.
+  DETECT ONLY   Reported accurately. Nothing acts on the finding yet.
+  CONFIG READY  Written into the build config, needs certificates to take effect.
+  BLOCKED       Cannot work until code signing exists.
+  KNOWN GAP     Deliberately left open, with the reason recorded.
+
+
+=============================================================================================================
+A. WINDOW AND SESSION LOCKDOWN
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+1    Kiosk window               Fullscreen, frameless, no application menu. Kiosk  macOS+Win     LIVE
+                                mode on in every build except dev.
+2    Single instance lock       A second copy refuses to start and focuses the one macOS+Win     LIVE
+                                already running.
+3    Renderer isolation         Context isolation and sandbox on, Node integration macOS+Win     LIVE
+                                off, DevTools off in production.
+4    Popup denial               Every new-window and popup request is denied       macOS+Win     LIVE
+                                outright.
+5    Navigation filter          Checks navigation and redirects against a domain   macOS+Win     PARTIAL
+                                allowlist. No path or scheme filtering yet, on
+                                either platform.
+6    Shortcut blocking          DevTools, F12, reload, print, save page, view      macOS+Win     LIVE
+                                source, cut, copy, paste, PrintScreen.
+7    Context menu block         Right-click is disabled everywhere inside the app. macOS+Win     LIVE
+8    Drag-out block             Content cannot be dragged from the exam into       macOS+Win     LIVE
+                                another app.
+
+
+=============================================================================================================
+B. EXIT CONTROL
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+9    Invigilator code prompt    The quit shortcut opens a modal, capture-protected macOS+Win     LIVE
+                                prompt instead of exiting.
+10   Hashed code                Stored as SHA-256 in the config, never in the      macOS+Win     LIVE
+                                clear, compared in constant time.
+11   Attempt limit              Three tries, then the prompt locks for the rest of macOS+Win     LIVE
+                                the session.
+12   Attempt logging            Every wrong code and every approved exit is        macOS+Win     LIVE
+                                written to the report.
+13   Dev-only bypass            Unprotected exit survives only in an unpackaged    macOS+Win     LIVE
+                                dev build, never in a shipped one.
+14   Sample-code warning        Startup warns while the sample code shipped in the macOS+Win     LIVE
+                                repo is still in place.
+
+
+=============================================================================================================
+C. SCREEN CAPTURE PREVENTION
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+15   Capture exclusion          Window excluded from screenshots, recordings and   macOS+Win     LIVE
+                                shares. NSWindowSharingNone on macOS,
+                                WDA_EXCLUDEFROMCAPTURE on Windows.
+16   Re-apply on transition     Reapplied on show and on entering fullscreen,      macOS+Win     LIVE
+                                because macOS can drop the flag.
+17   System screenshot disable  System-wide screenshot capture switched off for    macOS only    LIVE
+                                the exam. Windows has no equivalent switch.
+18   Setting restore            Put back on quit, on interrupt, terminate and      macOS only    LIVE
+                                hangup signals, and on an uncaught exception.
+19   Crash recovery             A marker file lets the next launch restore a       macOS only    LIVE
+                                setting left behind by a force-kill.
+20   Capture file watch         Screenshot folder watched. Any image, PDF or video macOS only    LIVE
+                                appearing is recorded with a timestamp.
+21   Recorder detection         Process list polled every five seconds for OBS,    Win UNTESTED  LIVE
+                                Loom, AnyDesk, TeamViewer and others.
+22   False-positive filter      Apple daemons and bundled auto-updaters excluded,  macOS only    LIVE
+                                so ScreenSharingSubscriber and ZoomUpdater do not
+                                fire.
+
+
+=============================================================================================================
+D. SYSTEM INVENTORY
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+23   Running app list           Windowed apps, menu-bar agents and background      Win UNTESTED  LIVE
+                                daemons, each with pid and bundle id.
+24   Process count              Total operating system process count recorded in   Win UNTESTED  LIVE
+                                every snapshot.
+25   Prohibited app matching    Whole-word match on name and bundle id against 31  Win UNTESTED  DETECT ONLY
+                                configured rules.
+26   USB device list            Every non-hub USB device with its vendor and       Win UNTESTED  LIVE
+                                connection speed.
+27   Bluetooth device list      Connected Bluetooth peripherals with their device  macOS only    LIVE
+                                type.
+28   Second keyboard detection  HID usage page 1 usage 6. Catches a keyboard       macOS only    DETECT ONLY
+                                behind a wireless dongle.
+29   Display detection          Connection type and mirror state per screen, so a  Win UNTESTED  DETECT ONLY
+                                mirrored monitor reads differently.
+30   Camera list                Attached cameras, with virtual cameras such as OBS Win UNTESTED  DETECT ONLY
+                                and ManyCam flagged.
+31   Device risk reasons        Mass storage, capture cards, tethered phones and   Win UNTESTED  LIVE
+                                extra network interfaces carry a stated reason.
+32   Capture permission status  The app's own screen-recording grant is read and   macOS only    LIVE
+                                reported.
+
+
+=============================================================================================================
+E. EVIDENCE REPORT
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+33   Plain text report          One file, appended to, one self-contained block    macOS+Win     LIVE
+                                per snapshot.
+34   Snapshot at launch         Written before the student sees anything, so a     macOS+Win     LIVE
+                                block exists even if the session ends badly.
+35   Snapshot on demand         The student runs the pre-flight check from the     macOS+Win     LIVE
+                                launch screen.
+36   Snapshot at exam start     The scan that gates the exam when blocking on      macOS+Win     LIVE
+                                findings is switched on.
+37   Periodic snapshot          Every two minutes during the exam by default.      macOS+Win     LIVE
+                                Configurable, zero disables it.
+38   Findings list              Deduplicated by rule, so helper processes do not   macOS+Win     LIVE
+                                bury the finding that matters.
+39   Violation log              Capture attempts and exit attempts recorded with   macOS+Win     LIVE
+                                timestamps.
+40   Session summary            Closing line with the snapshot count and total     macOS+Win     LIVE
+                                violations recorded.
+
+
+=============================================================================================================
+F. LAUNCH SCREEN
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+41   Pre-flight panel           Runs automatically on open and again whenever the  macOS+Win     LIVE
+                                student asks.
+42   Counts strip               Apps open, total processes, external devices and   macOS+Win     LIVE
+                                flagged items.
+43   App and device lists       Every row marked ok or flagged, with the reason    macOS+Win     LIVE
+                                spelled out.
+44   Capture status             Whether the window is capture-proof and whether    macOS+Win     LIVE
+                                screenshots are blocked.
+45   Start gate                 The start button can be held disabled until the    macOS+Win     LIVE
+                                machine is clean.
+
+
+=============================================================================================================
+G. BUILD HARDENING  (verified on a packaged macOS build, 10 Sep 2026)
+=============================================================================================================
+#    FEATURE                    WHAT IT DOES                                       PLATFORM      STATUS
+-------------------------------------------------------------------------------------------------------------
+46   Run-as-node disabled       An environment variable can no longer turn the app Win UNTESTED  LIVE
+                                binary into a plain Node interpreter.
+47   Debugger disabled          Inspect arguments no longer attach a debugger to   Win UNTESTED  LIVE
+                                the main process.
+48   Node options disabled      Cannot inject a module that runs before the app's  Win UNTESTED  LIVE
+                                first line.
+49   Load only from archive     Refuses a loose app directory placed beside the    Win UNTESTED  LIVE
+                                packaged archive.
+50   Cookie encryption          Session cookies are encrypted on disk.             Win UNTESTED  LIVE
+51   Hardened runtime           Minimal entitlements. Loader variables, library    macOS only    CONFIG READY
+                                validation and debugger entitlements withheld.
+52   Archive integrity          Editing the config inside the package would break  Win UNTESTED  BLOCKED
+                                the app. Needs a signing certificate.
+53   Code signing               Identity, notarization and the Windows hash        Win UNTESTED  BLOCKED
+                                algorithm are wired in as placeholders.
+54   File protocol privileges   Left at default. Turning it off stops the app      macOS+Win     KNOWN GAP
+                                loading its own screens from the archive.
+
+
+=============================================================================================================
+H. NOT BUILT YET  (worst first)
+=============================================================================================================
+#    FEATURE                    WHY IT MATTERS
+-------------------------------------------------------------------------------------------------------------
+1    Browser exam key           The exam server cannot tell this browser from
+                                Chrome with a spoofed user agent.
+2    Virtual machine detection  Running the exam in a VM defeats capture
+                                exclusion, screenshot blocking and the inventory
+                                at once.
+3    Enforcement on findings    Prohibited apps, extra keyboards and extra
+                                displays are reported and never acted on.
+4    OS-level task switching    Cmd+Tab, Mission Control and the Dock. Task
+                                Manager, Alt-Tab and the Start menu on Windows.
+5    Session-level web controls No download blocking, permission handler or
+                                certificate error handling.
+6    Backend integration        No launch token, no telemetry, no server-side
+                                violation log, no auto-update.
+7    Identity layer             No ID capture, face match, presence or gaze flags,
+                                audio monitoring or integrity score.
+8    Crash handling             No handler for a dead or unresponsive renderer, so
+                                a crash leaves the desktop exposed.
+9    Permitted app allowlist    Exams that need a calculator have no supported way
+                                to get one.
+10   Windows build              No Windows build has ever been produced or run.
+                                Every row marked Win UNTESTED depends on that.
+
+
+=============================================================================================================
+I. CONFIGURATION  (config/app-config.json, no rebuild needed)
+=============================================================================================================
+KEY                            DEFAULT       WHAT IT DOES
+-------------------------------------------------------------------------------------------------------------
+examUrl                        assetdynamic  Page loaded after the student presses start.
+allowedDomains                 4 domains     Navigation refused outside these and their
+                                             subdomains.
+exit.codeSha256                sample        SHA-256 of the invigilator code. Replace before
+                                             shipping.
+inventory.blockScreenshots     true          Disable system screenshots for the exam, restore
+                                             after.
+inventory.blockExamOnFindings  false         Refuse to load the exam until the machine is
+                                             clean.
+inventory.snapshotIntervalMs   120000        Re-scan cadence. Zero scans only at launch and
+                                             start.
+inventory.prohibitedProcesses  31 rules      Remote access, recorders, conferencing, messaging,
+                                             VMs, AI.
+inventory.reportFile           reports/      Where evidence goes. Packaged builds fall back to
+                                             user data.
+
+=============================================================================================================
+TOTALS: 54 features built.
+  By platform : 30 macOS+Win, 9 macOS only, 15 Win UNTESTED
+  By status   : 45 live, 9 partial or pending, 10 not built
+=============================================================================================================

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>End secure session</title>
+  <style>
+    :root { --primary:#1f6f6a; --ink:#16242c; --muted:#5c6f78; --line:#dde5e9; --warn:#b4531a; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; color: var(--ink); user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    }
+    .wrap { padding: 26px 28px; width: 100%; text-align: center; }
+    h1 { font-size: 16px; margin: 0 0 6px; }
+    p { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 18px; }
+    input {
+      width: 100%; padding: 11px 12px; font-size: 15px; text-align: center; letter-spacing: .18em;
+      border: 1px solid var(--line); border-radius: 8px; outline: none; font-family: inherit;
+    }
+    input:focus { border-color: var(--primary); }
+    .row { display: flex; gap: 8px; margin-top: 14px; }
+    button { flex: 1; border-radius: 8px; padding: 10px; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; }
+    button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    button:disabled { opacity: .5; cursor: default; }
+    .msg { margin-top: 12px; font-size: 12px; min-height: 16px; color: var(--warn); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Invigilator code required</h1>
+    <p>Ending this session early is recorded. Ask your invigilator to enter the code.</p>
+    <input id="code" type="password" autocomplete="off" autofocus placeholder="Enter code" />
+    <div class="row">
+      <button id="cancel">Back to exam</button>
+      <button id="submit" class="primary">End session</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    (function () {
+      var code = document.getElementById('code');
+      var msg = document.getElementById('msg');
+      var submit = document.getElementById('submit');
+
+      async function send() {
+        if (!code.value) { return; }
+        submit.disabled = true;
+        try {
+          var res = await window.secureBrowser.submitExitCode(code.value);
+          if (!res.ok) {
+            code.value = '';
+            msg.textContent = res.locked
+              ? 'Too many attempts. Contact your invigilator.'
+              : 'Incorrect code. ' + res.left + ' attempt(s) left.';
+          }
+        } catch (e) {
+          msg.textContent = 'Could not verify the code.';
+        }
+        submit.disabled = false;
+        code.focus();
+      }
+
+      submit.addEventListener('click', send);
+      code.addEventListener('keydown', function (e) { if (e.key === 'Enter') { send(); } });
+      document.getElementById('cancel').addEventListener('click', function () {
+        window.secureBrowser.cancelExit();
+      });
+    })();
+  </script>
+</body>
+</html>
